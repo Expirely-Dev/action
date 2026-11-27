@@ -3,7 +3,7 @@
 Fail CI before a TLS certificate expires.
 
 ```yaml
-- uses: expirely-dev/expirely-action@v1
+- uses: expirely-dev/expirely-action@v2
   with:
     targets: |
       example.com
@@ -30,7 +30,7 @@ Warn 21 days ahead, with the targets in a file:
 - uses: actions/checkout@v7
   with:
     persist-credentials: false
-- uses: expirely-dev/expirely-action@v1
+- uses: expirely-dev/expirely-action@v2
   with:
     args: |
       --warn-days
@@ -46,7 +46,7 @@ Every region of an AWS account, with credentials from OIDC; the role needs `acm:
   with:
     role-to-assume: arn:aws:iam::123456789012:role/expirely
     aws-region: us-east-1
-- uses: expirely-dev/expirely-action@v1
+- uses: expirely-dev/expirely-action@v2
   with:
     args: |
       aws
@@ -57,7 +57,7 @@ Every region of an AWS account, with credentials from OIDC; the role needs `acm:
 Report without failing the job:
 
 ```yaml
-- uses: expirely-dev/expirely-action@v1
+- uses: expirely-dev/expirely-action@v2
   continue-on-error: true
   with:
     targets: example.com
@@ -66,7 +66,7 @@ Report without failing the job:
 Run expirely yourself:
 
 ```yaml
-- uses: expirely-dev/expirely-action@v1
+- uses: expirely-dev/expirely-action@v2
 - run: expirely --json example.com | jq '.summary'
 ```
 
@@ -76,10 +76,10 @@ The step ends with expirely's exit code: `0` when every certificate is ok, `1` w
 
 ## Versions
 
-`v1` points at the latest `v1.x.y` release. A new expirely version that breaks its exit codes or JSON comes with a new major version of the action. To pin the action and, with it, the exact expirely binary, use a full commit SHA with the version in a comment, which Dependabot and Renovate keep current:
+`v2` points at the latest `v2.x.y` release. A new expirely version that breaks its exit codes or JSON comes with a new major version of the action. To pin the action and, with it, the exact expirely binary, use a full commit SHA with the version in a comment, which Dependabot and Renovate keep current:
 
 ```yaml
-- uses: expirely-dev/expirely-action@<full-commit-sha> # v1.0.0
+- uses: expirely-dev/expirely-action@<full-commit-sha> # v2.0.0
 ```
 
 The pinned version's checksums ship with the action; a workflow here checks the build provenance of every archive of a new expirely release before it makes that release the default. Any other `version` is checked against the `checksums.txt` of its release.
