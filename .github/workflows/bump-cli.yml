@@ -42,7 +42,7 @@ jobs:
             echo "::error::version must be a release tag such as v0.7.0, got \"$tag\""
             exit 1
           fi
-          current=$(sed -n "s/^        EXPIRELY_DEFAULT_VERSION: '\(.*\)'\$/\1/p" action.yml)
+          current=$(scripts/check-default-version.sh)
           branch="bump/expirely-${tag}"
           echo "tag=${tag}" >>"$GITHUB_OUTPUT"
           echo "branch=${branch}" >>"$GITHUB_OUTPUT"

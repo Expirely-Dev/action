@@ -44,10 +44,7 @@ done
 rm -f versions/*.sha256
 cp "$work/checksums.txt" "versions/${version}.sha256"
 
-sed -i.bak \
-  -e "/^  version:\$/,/^    default:/ s/^    default: '.*'\$/    default: '${version}'/" \
-  -e "s/^        EXPIRELY_DEFAULT_VERSION: '.*'\$/        EXPIRELY_DEFAULT_VERSION: '${version}'/" \
-  action.yml
+sed -i.bak "/^  version:\$/,/^    default:/ s/^    default: '.*'\$/    default: '${version}'/" action.yml
 rm -f action.yml.bak
 
-scripts/check-default-version.sh
+echo "default version: $(scripts/check-default-version.sh)"

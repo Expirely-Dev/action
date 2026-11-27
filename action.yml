@@ -1,5 +1,5 @@
 name: expirely
-description: Fail CI before a TLS certificate expires. Installs a verified expirely binary and checks your endpoints, AWS or Google Cloud.
+description: Fail CI before a TLS certificate expires. Installs a checksum-verified expirely and checks your endpoints, AWS or Google Cloud.
 author: bycavii
 branding:
   icon: clock
@@ -10,112 +10,21 @@ inputs:
     description: Endpoints to check, one per line, as host, host:port or https:// URL. Blank lines and lines starting with # are skipped.
     required: false
     default: ''
-  targets-file:
-    description: Path to a file with one target per line, read by expirely --file. Combined with targets.
-    required: false
-    default: ''
-  warn-days:
-    description: A certificate that expires within this many days counts as expiring. Empty keeps the expirely default, 30.
-    required: false
-    default: ''
-  fail-on:
-    description: Which findings fail the step. expiring fails on expiring or expired certificates, expired only on expired ones, never on none.
-    required: false
-    default: expiring
-  fail-on-error:
-    description: Fail the step when a target or a cloud region could not be read. true or false.
-    required: false
-    default: 'true'
-  summary:
-    description: Write a job summary with every certificate that needs attention. true or false.
-    required: false
-    default: 'true'
-  annotations:
-    description: Add an error or warning annotation per certificate that needs attention, most urgent first. true or false.
-    required: false
-    default: 'true'
   args:
-    description: Extra expirely arguments, one per line, placed first; start with aws or gcp to read a cloud account instead of targets.
+    description: Extra expirely arguments, one per line, placed before the targets, such as --warn-days and 21, or aws to read AWS. With neither targets nor args, the action only installs expirely.
     required: false
     default: ''
-  working-directory:
-    description: Directory expirely runs in, for relative paths in targets-file and args.
-    required: false
-    default: '.'
-  install-only:
-    description: Install expirely and add it to PATH without running a check. true or false.
-    required: false
-    default: 'false'
   version:
-    description: expirely version, as 0.6.0 or v0.6.0, or latest. The default is pinned, and its checksums ship with this action.
+    description: expirely version to install, such as 0.6.0. The default is pinned, and its checksums ship with this action.
     required: false
     default: '0.6.0'
-  verify-attestation:
-    description: Check the SLSA build provenance of the archive with gh attestation verify. auto checks every version other than the default on github.com; true or false.
-    required: false
-    default: auto
-  token:
-    description: Token for gh attestation verify and for resolving latest; it is only sent to github.com.
-    required: false
-    default: ${{ github.server_url == 'https://github.com' && github.token || '' }}
-
-outputs:
-  version:
-    description: The expirely version installed, such as 0.6.0.
-    value: ${{ steps.expirely.outputs.version }}
-  path:
-    description: Absolute path of the expirely binary.
-    value: ${{ steps.expirely.outputs.path }}
-  exit-code:
-    description: The expirely exit code. 0 all ok, 1 expiring or expired, 2 usage error, 3 something could not be read. Empty with install-only.
-    value: ${{ steps.expirely.outputs.exit-code }}
-  total:
-    description: Certificates checked.
-    value: ${{ steps.expirely.outputs.total }}
-  ok:
-    description: Certificates valid beyond warn-days.
-    value: ${{ steps.expirely.outputs.ok }}
-  expiring:
-    description: Certificates that expire within warn-days.
-    value: ${{ steps.expirely.outputs.expiring }}
-  expired:
-    description: Certificates already expired.
-    value: ${{ steps.expirely.outputs.expired }}
-  errors:
-    description: Targets that could not be read.
-    value: ${{ steps.expirely.outputs.errors }}
-  unreadable:
-    description: Cloud regions or locations that could not be read, comma-separated, such as acm:ap-south-1. Empty when every one was read.
-    value: ${{ steps.expirely.outputs.unreadable }}
-  min-days-left:
-    description: Days left on the certificate that expires first, negative once expired. Empty when no certificate was read.
-    value: ${{ steps.expirely.outputs.min-days-left }}
-  report-file:
-    description: Path to the full JSON report expirely printed.
-    value: ${{ steps.expirely.outputs.report-file }}
-  summary-file:
-    description: Path to a Markdown summary of what needs attention. Empty, and no file written, when every certificate is ok.
-    value: ${{ steps.expirely.outputs.summary-file }}
 
 runs:
   using: composite
   steps:
-    - id: expirely
-      shell: bash
+    - shell: bash
       env:
         EXPIRELY_TARGETS: ${{ inputs.targets }}
-        EXPIRELY_TARGETS_FILE: ${{ inputs.targets-file }}
-        EXPIRELY_WARN_DAYS: ${{ inputs.warn-days }}
-        EXPIRELY_FAIL_ON: ${{ inputs.fail-on }}
-        EXPIRELY_FAIL_ON_ERROR: ${{ inputs.fail-on-error }}
-        EXPIRELY_SUMMARY: ${{ inputs.summary }}
-        EXPIRELY_ANNOTATIONS: ${{ inputs.annotations }}
         EXPIRELY_ARGS: ${{ inputs.args }}
-        EXPIRELY_WORKING_DIRECTORY: ${{ inputs.working-directory }}
-        EXPIRELY_INSTALL_ONLY: ${{ inputs.install-only }}
         EXPIRELY_VERSION: ${{ inputs.version }}
-        EXPIRELY_DEFAULT_VERSION: '0.6.0'
-        EXPIRELY_VERIFY_ATTESTATION: ${{ inputs.verify-attestation }}
-        EXPIRELY_SERVER_URL: ${{ github.server_url }}
-        GH_TOKEN: ${{ inputs.token }}
       run: '"${GITHUB_ACTION_PATH}/action.sh"'
