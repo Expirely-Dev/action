@@ -11,7 +11,7 @@ inputs:
     required: false
     default: ''
   args:
-    description: Extra expirely arguments, one per line, placed before the targets, such as --warn-days and 21, or aws to read AWS. With neither targets nor args, the action only installs expirely.
+    description: Extra arguments of expirely tls, one per line, placed before the targets, such as --warn-days and 21, or aws to read AWS. With neither targets nor args, the action only installs expirely.
     required: false
     default: ''
   version:

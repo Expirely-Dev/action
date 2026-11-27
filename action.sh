@@ -81,4 +81,8 @@ fi
 if ((${#targets[@]} > 0)); then
   run_args+=(-- "${targets[@]}")
 fi
+IFS=. read -r major minor _ <<<"$version"
+if ((major > 0 || minor >= 9)) && [[ "${run_args[0]}" != tls ]]; then
+  run_args=(tls "${run_args[@]}")
+fi
 exec "${dir}/expirely" "${run_args[@]}"

@@ -17,7 +17,7 @@ The action installs [expirely](https://github.com/expirely-dev/expirely-cli), ch
 | Input | Description |
 | --- | --- |
 | `targets` | Endpoints to check, one per line, as `host`, `host:port` or `https://` URL. Blank lines and lines starting with `#` are skipped. |
-| `args` | Extra expirely arguments, one per line, placed before the targets. See [expirely --help](https://github.com/expirely-dev/expirely-cli/blob/main/docs/cli/expirely.mdx). |
+| `args` | Extra arguments of `expirely tls`, one per line, placed before the targets; start with `aws` or `gcp` to read a cloud account. See [expirely tls](https://github.com/expirely-dev/expirely-cli/blob/main/docs/cli/tls.mdx). |
 | `version` | expirely version to install. The default is pinned in [`action.yml`](action.yml), and its checksums ship in [`versions/`](versions). |
 
 With neither `targets` nor `args`, the action only installs expirely and adds it to `PATH`.
