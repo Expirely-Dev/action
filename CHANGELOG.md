@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.0.0](https://github.com/Expirely-Dev/action/compare/v2.1.0...v3.0.0) (2026-11-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* use expirely v0.10.0 by default ([#7](https://github.com/Expirely-Dev/action/issues/7))
+
+### Added
+
+* use expirely v0.10.0 by default ([#7](https://github.com/Expirely-Dev/action/issues/7)) ([e29c1ab](https://github.com/Expirely-Dev/action/commit/e29c1ab675f0a4f7502465aff4f34d7774f9cdcd))
+
 ## [2.1.0](https://github.com/Expirely-Dev/expirely-action/compare/v2.0.0...v2.1.0) (2026-11-27)
 
 
