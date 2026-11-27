@@ -1,0 +1,147 @@
+name: self-test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '23 5 * * 1'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: self-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  self-test:
+    name: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+          - macos-latest
+          - macos-15-intel
+          - windows-latest
+          - windows-11-arm
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version-file: test/certserver/go.mod
+          cache: false
+      - name: Start the test TLS server
+        shell: bash
+        run: test/start-certserver.sh
+
+      - id: ok
+        name: A valid certificate passes
+        uses: ./
+        with:
+          targets: 127.0.0.1:8441
+          args: |
+            --ca-file
+            ${{ runner.temp }}/ca.pem
+
+      - id: expiring
+        name: An expiring certificate fails by default
+        continue-on-error: true
+        uses: ./
+        with:
+          targets: |
+            # comments and blank lines are skipped
+
+            127.0.0.1:8442
+          args: |
+            --ca-file
+            ${{ runner.temp }}/ca.pem
+
+      - id: expiring-allowed
+        name: fail-on expired lets an expiring certificate pass
+        uses: ./
+        with:
+          targets: 127.0.0.1:8442
+          fail-on: expired
+          args: |
+            --ca-file
+            ${{ runner.temp }}/ca.pem
+
+      - id: report-only
+        name: fail-on never and fail-on-error false only report
+        uses: ./
+        with:
+          targets: |
+            127.0.0.1:8443
+            127.0.0.1:1
+          fail-on: never
+          fail-on-error: false
+          args: |
+            --ca-file
+            ${{ runner.temp }}/ca.pem
+
+      - id: unreadable
+        name: A target that cannot be read fails by default
+        continue-on-error: true
+        uses: ./
+        with:
+          targets: 127.0.0.1:1
+
+      - id: attestation
+        name: verify-attestation checks the build provenance
+        uses: ./
+        with:
+          targets: 127.0.0.1:8441
+          verify-attestation: true
+          args: |
+            --ca-file
+            ${{ runner.temp }}/ca.pem
+
+      - id: bad-input
+        name: An invalid input fails before installing
+        continue-on-error: true
+        uses: ./
+        with:
+          targets: 127.0.0.1:8441
+          fail-on: always
+
+      - id: install-only
+        name: install-only puts expirely on PATH
+        uses: ./
+        with:
+          install-only: true
+
+      - name: Check every case
+        shell: bash
+        env:
+          OK_OUTCOME: ${{ steps.ok.outcome }}
+          OK_EXIT_CODE: ${{ steps.ok.outputs.exit-code }}
+          OK_TOTAL: ${{ steps.ok.outputs.total }}
+          OK_OK: ${{ steps.ok.outputs.ok }}
+          OK_MIN_DAYS_LEFT: ${{ steps.ok.outputs.min-days-left }}
+          OK_SUMMARY_FILE: ${{ steps.ok.outputs.summary-file }}
+          OK_REPORT_FILE: ${{ steps.ok.outputs.report-file }}
+          EXPIRING_OUTCOME: ${{ steps.expiring.outcome }}
+          EXPIRING_EXIT_CODE: ${{ steps.expiring.outputs.exit-code }}
+          EXPIRING_EXPIRING: ${{ steps.expiring.outputs.expiring }}
+          ALLOWED_OUTCOME: ${{ steps.expiring-allowed.outcome }}
+          REPORT_OUTCOME: ${{ steps.report-only.outcome }}
+          REPORT_EXPIRED: ${{ steps.report-only.outputs.expired }}
+          REPORT_ERRORS: ${{ steps.report-only.outputs.errors }}
+          REPORT_SUMMARY_FILE: ${{ steps.report-only.outputs.summary-file }}
+          UNREADABLE_OUTCOME: ${{ steps.unreadable.outcome }}
+          UNREADABLE_EXIT_CODE: ${{ steps.unreadable.outputs.exit-code }}
+          ATTESTATION_OUTCOME: ${{ steps.attestation.outcome }}
+          BAD_INPUT_OUTCOME: ${{ steps.bad-input.outcome }}
+          BAD_INPUT_VERSION: ${{ steps.bad-input.outputs.version }}
+          INSTALLED_VERSION: ${{ steps.install-only.outputs.version }}
+          INSTALLED_PATH: ${{ steps.install-only.outputs.path }}
+        run: test/assert.sh

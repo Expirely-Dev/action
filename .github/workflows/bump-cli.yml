@@ -1,0 +1,85 @@
+name: bump-cli
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release tag of bycavii/expirely-cli, such as v0.7.0; empty uses the latest release
+        required: false
+      reviewer:
+        description: GitHub user asked to review the pull request
+        required: false
+  schedule:
+    - cron: '41 6 * * *'
+
+permissions: {}
+
+concurrency:
+  group: bump-cli
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - id: version
+        name: Resolve the version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          tag=${REQUESTED:-$(gh release view --repo bycavii/expirely-cli --json tagName --jq .tagName)}
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version must be a release tag such as v0.7.0, got \"$tag\""
+            exit 1
+          fi
+          current=$(sed -n "s/^        EXPIRELY_DEFAULT_VERSION: '\(.*\)'\$/\1/p" action.yml)
+          branch="bump/expirely-${tag}"
+          echo "tag=${tag}" >>"$GITHUB_OUTPUT"
+          echo "branch=${branch}" >>"$GITHUB_OUTPUT"
+          if [[ "${tag#v}" == "$current" ]]; then
+            echo "expirely ${tag} is already the default"
+            echo "needed=false" >>"$GITHUB_OUTPUT"
+          elif git ls-remote --exit-code --heads origin "$branch" >/dev/null; then
+            echo "${branch} already exists; its pull request proposes ${tag}"
+            echo "needed=false" >>"$GITHUB_OUTPUT"
+          else
+            echo "needed=true" >>"$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify the release and vendor its checksums
+        if: steps.version.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: scripts/vendor-release.sh "$TAG"
+
+      - name: Open the pull request
+        if: steps.version.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          BRANCH: ${{ steps.version.outputs.branch }}
+          REVIEWER: ${{ inputs.reviewer }}
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --create "$BRANCH"
+          git add action.yml versions
+          git commit --message "feat: use expirely ${TAG} by default"
+          git push origin "$BRANCH"
+          gh pr create --base main --head "$BRANCH" \
+            --title "feat: use expirely ${TAG} by default" \
+            --body "Makes [expirely ${TAG}](https://github.com/bycavii/expirely-cli/releases/tag/${TAG}) the default version. Every archive passed \`gh attestation verify\` against the expirely-cli release workflow and matched its \`checksums.txt\`, which now ships as \`versions/${TAG#v}.sha256\`. Read the [expirely changelog](https://github.com/bycavii/expirely-cli/blob/main/CHANGELOG.md) before merging: a breaking change in expirely calls for a major release of this action." \
+            ${REVIEWER:+--reviewer "$REVIEWER"}

@@ -1,0 +1,58 @@
+name: release
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      released: ${{ steps.release.outputs.release_created }}
+      tag: ${{ steps.release.outputs.tag_name }}
+      major: ${{ steps.release.outputs.major }}
+      sha: ${{ steps.release.outputs.sha }}
+    steps:
+      - id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  major-tag:
+    needs: release-please
+    if: needs.release-please.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Point the major tag at the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          MAJOR: v${{ needs.release-please.outputs.major }}
+          SHA: ${{ needs.release-please.outputs.sha }}
+          TAG: ${{ needs.release-please.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$MAJOR" =~ ^v[0-9]+$ || ! "$SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::release-please gave major \"$MAJOR\" and sha \"$SHA\""
+            exit 1
+          fi
+          if gh api "repos/${REPO}/git/ref/tags/${MAJOR}" >/dev/null 2>&1; then
+            gh api --method PATCH "repos/${REPO}/git/refs/tags/${MAJOR}" -f sha="$SHA" -F force=true >/dev/null
+          else
+            gh api --method POST "repos/${REPO}/git/refs" -f ref="refs/tags/${MAJOR}" -f sha="$SHA" >/dev/null
+          fi
+          echo "${MAJOR} now points at ${TAG} (${SHA})"
