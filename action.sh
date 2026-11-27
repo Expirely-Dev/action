@@ -24,14 +24,14 @@ case "${RUNNER_OS:-}-${RUNNER_ARCH:-}" in
 esac
 
 archive="expirely_${version}_${platform}"
-url="https://github.com/bycavii/expirely-cli/releases/download/v${version}"
+url="https://github.com/expirely-dev/expirely-cli/releases/download/v${version}"
 dir=$(mktemp -d "$(path -u "$RUNNER_TEMP")/expirely.XXXXXXXX")
 
 checksums="$(path -u "$GITHUB_ACTION_PATH")/versions/${version}.sha256"
 if [[ ! -f "$checksums" ]]; then
   checksums="${dir}/checksums.txt"
   curl --fail --silent --show-error --location --retry 5 --output "$checksums" "${url}/checksums.txt" ||
-    fail "expirely v${version} has no checksums.txt; see https://github.com/bycavii/expirely-cli/releases for the versions there are."
+    fail "expirely v${version} has no checksums.txt; see https://github.com/expirely-dev/expirely-cli/releases for the versions there are."
 fi
 curl --fail --silent --show-error --location --retry 5 --output "${dir}/${archive}" "${url}/${archive}" ||
   fail "could not download ${archive}; rerun the job."

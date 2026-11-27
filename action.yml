@@ -1,6 +1,6 @@
-name: expirely
-description: Fail CI before a TLS certificate expires. Installs a checksum-verified expirely and checks your endpoints, AWS or Google Cloud.
-author: bycavii
+name: expirely certificate check
+description: Fail CI before a TLS certificate expires. Checks endpoints, AWS or Google Cloud with a checksum-verified expirely.
+author: expirely-dev
 branding:
   icon: clock
   color: orange

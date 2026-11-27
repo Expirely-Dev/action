@@ -3,14 +3,14 @@ set -euo pipefail
 
 usage="usage: scripts/vendor-release.sh vX.Y.Z
 
-Downloads every archive of that bycavii/expirely-cli release and its
+Downloads every archive of that expirely-dev/expirely-cli release and its
 checksums.txt, checks each archive against checksums.txt and with
 gh attestation verify, then makes it the default version of the action:
 versions/X.Y.Z.sha256 replaces the old checksums and action.yml points at it.
 Needs gh with a token (GH_TOKEN or gh auth login)."
 
-readonly repo="bycavii/expirely-cli"
-readonly signer="bycavii/expirely-cli/.github/workflows/release.yml"
+readonly repo="Expirely-Dev/expirely-cli"
+readonly signer="Expirely-Dev/expirely-cli/.github/workflows/release.yml"
 
 tag=${1:-}
 if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then

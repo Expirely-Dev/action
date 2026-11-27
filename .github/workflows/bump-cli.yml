@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Release tag of bycavii/expirely-cli, such as v0.7.0; empty uses the latest release
+        description: Release tag of expirely-dev/expirely-cli, such as v0.7.0; empty uses the latest release
         required: false
       reviewer:
         description: GitHub user asked to review the pull request
@@ -37,7 +37,7 @@ jobs:
           REQUESTED: ${{ inputs.version }}
         run: |
           set -euo pipefail
-          tag=${REQUESTED:-$(gh release view --repo bycavii/expirely-cli --json tagName --jq .tagName)}
+          tag=${REQUESTED:-$(gh release view --repo expirely-dev/expirely-cli --json tagName --jq .tagName)}
           if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::error::version must be a release tag such as v0.7.0, got \"$tag\""
             exit 1
@@ -81,5 +81,5 @@ jobs:
           git push origin "$BRANCH"
           gh pr create --base main --head "$BRANCH" \
             --title "feat: use expirely ${TAG} by default" \
-            --body "Makes [expirely ${TAG}](https://github.com/bycavii/expirely-cli/releases/tag/${TAG}) the default version. Every archive passed \`gh attestation verify\` against the expirely-cli release workflow and matched its \`checksums.txt\`, which now ships as \`versions/${TAG#v}.sha256\`. Read the [expirely changelog](https://github.com/bycavii/expirely-cli/blob/main/CHANGELOG.md) before merging: a breaking change in expirely calls for a major release of this action." \
+            --body "Makes [expirely ${TAG}](https://github.com/expirely-dev/expirely-cli/releases/tag/${TAG}) the default version. Every archive passed \`gh attestation verify\` against the expirely-cli release workflow and matched its \`checksums.txt\`, which now ships as \`versions/${TAG#v}.sha256\`. Read the [expirely changelog](https://github.com/expirely-dev/expirely-cli/blob/main/CHANGELOG.md) before merging: a breaking change in expirely calls for a major release of this action." \
             ${REVIEWER:+--reviewer "$REVIEWER"}
