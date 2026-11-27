@@ -17,7 +17,7 @@ inputs:
   version:
     description: expirely version to install, such as 0.6.0. The default is pinned, and its checksums ship with this action.
     required: false
-    default: '0.8.0'
+    default: '0.9.0'
 
 runs:
   using: composite
